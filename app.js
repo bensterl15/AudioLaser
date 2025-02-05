@@ -1,3 +1,12 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const connectButton = document.getElementById("connectBtn");
+    if (connectButton) {
+        connectButton.addEventListener("click", connectToESP32);
+    } else {
+        console.error("Button not found!");
+    }
+});
+
 async function connectToESP32() {
     try {
         console.log("Requesting Bluetooth Device...");
@@ -12,6 +21,3 @@ async function connectToESP32() {
         console.error("Error selecting Bluetooth device:", error);
     }
 }
-
-// Attach event listener to the button
-document.getElementById("connectBtn").addEventListener("click", connectToESP32);
