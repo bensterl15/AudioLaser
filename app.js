@@ -28,10 +28,14 @@ document.addEventListener("DOMContentLoaded", function() {
 
             console.log("Connected! Ready to communicate.");
 
-            // Read the initial value
-            let value = await bleCharacteristic.readValue();
-            let decoder = new TextDecoder("utf-8");
-            console.log("Received:", decoder.decode(value));
+            // Read the initial value with error handling
+            try {
+                let value = await bleCharacteristic.readValue();
+                let decoder = new TextDecoder("utf-8");
+                console.log("Received:", decoder.decode(value));
+            } catch (readError) {
+                console.error("Error reading characteristic value:", readError);
+            }
 
             // Set up notifications (if supported)
             try {
