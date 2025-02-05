@@ -34,14 +34,9 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("Received:", decoder.decode(value));
 
             // Set up notifications (if supported)
-            try {
-                await bleCharacteristic.startNotifications();
-                console.log("Listening for notifications...");
-                bleCharacteristic.addEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
-            } catch (err) {
-                console.error("Notifications not supported:", err);
-                // Fallback if notifications are not supported (you can still read/write)
-            }
+            bleCharacteristic.addEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
+            await bleCharacteristic.startNotifications();
+            console.log("Listening for notifications...");
 
         } catch (error) {
             console.error("Error connecting to Bluetooth device:", error);
