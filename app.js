@@ -1,5 +1,14 @@
+let bleCharacteristic = null;
+
 document.addEventListener("DOMContentLoaded", function() {
-    // Your existing code that interacts with the button
+    // Function to handle incoming data from the Bluetooth characteristic
+    function handleCharacteristicValueChanged(event) {
+        let value = event.target.value;
+        let decoder = new TextDecoder("utf-8");
+        console.log("Notification received:", decoder.decode(value));
+    }
+
+    // Add event listener to the connect button
     document.getElementById("connectBtn").addEventListener("click", async function() {
         try {
             console.log("Requesting Bluetooth Device...");
@@ -32,5 +41,22 @@ document.addEventListener("DOMContentLoaded", function() {
         } catch (error) {
             console.error("Error connecting to Bluetooth device:", error);
         }
+    });
+
+    // Function to write data to the Bluetooth characteristic
+    async function writeToCharacteristic(data) {
+        if (bleCharacteristic) {
+            let encoder = new TextEncoder();
+            await bleCharacteristic.writeValue(encoder.encode(data));
+            console.log("Sent:", data);
+        } else {
+            console.error("Not connected to a device.");
+        }
+    }
+
+    // Event listener for sending data
+    document.getElementById("sendBtn").addEventListener("click", function() {
+        let data = document.getElementById("writeData").value;
+        writeToCharacteristic(data);
     });
 });
