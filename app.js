@@ -1,65 +1,36 @@
-const serviceUuid = '12345678-1234-5678-1234-56789abcdef0';
-const characteristicUuid = 'abcdef01-1234-5678-1234-56789abcdef0';
+document.addEventListener("DOMContentLoaded", function() {
+    // Your existing code that interacts with the button
+    document.getElementById("connectBtn").addEventListener("click", async function() {
+        try {
+            console.log("Requesting Bluetooth Device...");
+            const device = await navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,  // Allow any BLE device
+                optionalServices: ["12345678-1234-5678-1234-56789abcdef0"] // Your SERVICE_UUID
+            });
 
-let bluetoothDevice;
-let characteristic;
+            console.log("Connecting to GATT Server...");
+            const server = await device.gatt.connect();
 
-async function connectBluetooth() {
-    try {
-        console.log("Requesting Bluetooth Device...");
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [serviceUuid]
-        });
+            console.log("Getting Service...");
+            const service = await server.getPrimaryService("12345678-1234-5678-1234-56789abcdef0");
 
-        console.log("Connecting to GATT Server...");
-        const server = await bluetoothDevice.gatt.connect();
+            console.log("Getting Characteristic...");
+            bleCharacteristic = await service.getCharacteristic("abcdef01-1234-5678-1234-56789abcdef0");
 
-        console.log("Getting Service...");
-        const service = await server.getPrimaryService(serviceUuid);
+            console.log("Connected! Ready to communicate.");
 
-        console.log("Getting Characteristic...");
-        characteristic = await service.getCharacteristic(characteristicUuid);
+            // Read the initial value
+            let value = await bleCharacteristic.readValue();
+            let decoder = new TextDecoder("utf-8");
+            console.log("Received:", decoder.decode(value));
 
-        console.log("Connected! Ready to communicate.");
+            // Set up notifications (if supported)
+            bleCharacteristic.addEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
+            await bleCharacteristic.startNotifications();
+            console.log("Listening for notifications...");
 
-        // ✅ Check if Notify is supported before enabling notifications
-        if (characteristic.properties.notify) {
-            await characteristic.startNotifications();
-            characteristic.addEventListener("characteristicvaluechanged", handleNotifications);
-            console.log("Notifications enabled.");
-        } else {
-            console.warn("Notifications not supported on this characteristic.");
+        } catch (error) {
+            console.error("Error connecting to Bluetooth device:", error);
         }
-
-        // Read initial value
-        const value = await characteristic.readValue();
-        console.log("Received:", new TextDecoder().decode(value));
-        
-    } catch (error) {
-        console.error("Error connecting to Bluetooth device:", error);
-    }
-}
-
-function handleNotifications(event) {
-    let value = new TextDecoder().decode(event.target.value);
-    console.log("Received Notification:", value);
-}
-
-async function sendData(data) {
-    if (!characteristic) {
-        console.error("No Bluetooth connection.");
-        return;
-    }
-    try {
-        const encoder = new TextEncoder();
-        await characteristic.writeValue(encoder.encode(data));
-        console.log("Sent:", data);
-    } catch (error) {
-        console.error("Error sending data:", error);
-    }
-}
-
-document.querySelector("#connectButton").addEventListener("click", connectBluetooth);
-document.querySelector("#sendOn").addEventListener("click", () => sendData("1"));
-document.querySelector("#sendOff").addEventListener("click", () => sendData("0"));
+    });
+});
