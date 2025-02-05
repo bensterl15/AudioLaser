@@ -19,10 +19,13 @@ async function connectToESP32() {
         let characteristicsList = [];
         for (const service of services) {
             const characteristics = await service.getCharacteristics();
-            characteristicsList.push({
-                service: service.uuid,
-                characteristics: characteristics.map(c => c.uuid)
-            });
+            for (const char of characteristics) {
+                characteristicsList.push({
+                    service: service.uuid,
+                    characteristic: char.uuid,
+                    characteristicObj: char // Store the characteristic object
+                });
+            }
         }
 
         console.log("Characteristics:", characteristicsList);
@@ -33,17 +36,50 @@ async function connectToESP32() {
     }
 }
 
-// Function to display characteristics in a table
+// Function to display characteristics in the table
 function displayCharacteristics(characteristicsList) {
-    let tableHTML = `<table border="1"><tr><th>Service UUID</th><th>Characteristic UUIDs</th></tr>`;
+    let tableBody = document.querySelector("#characteristicsTable tbody");
+    tableBody.innerHTML = ""; // Clear existing rows
 
-    characteristicsList.forEach(service => {
-        tableHTML += `<tr><td>${service.service}</td><td>${service.characteristics.join("<br>")}</td></tr>`;
+    characteristicsList.forEach((item, index) => {
+        let row = document.createElement("tr");
+
+        let serviceCell = document.createElement("td");
+        serviceCell.textContent = item.service;
+        row.appendChild(serviceCell);
+
+        let characteristicCell = document.createElement("td");
+        characteristicCell.textContent = item.characteristic;
+        row.appendChild(characteristicCell);
+
+        let actionCell = document.createElement("td");
+        let inputField = document.createElement("input");
+        inputField.type = "text";
+        inputField.placeholder = "Enter value";
+
+        let writeButton = document.createElement("button");
+        writeButton.textContent = "Write";
+        writeButton.onclick = () => writeCharacteristic(item.characteristicObj, inputField.value);
+
+        actionCell.appendChild(inputField);
+        actionCell.appendChild(writeButton);
+        row.appendChild(actionCell);
+
+        tableBody.appendChild(row);
     });
+}
 
-    tableHTML += `</table>`;
+// Function to write to a characteristic
+async function writeCharacteristic(characteristic, value) {
+    try {
+        let encoder = new TextEncoder();
+        let data = encoder.encode(value);
 
-    document.getElementById("characteristicsTable").innerHTML = tableHTML;
+        await characteristic.writeValue(data);
+        console.log(`Wrote value "${value}" to characteristic ${characteristic.uuid}`);
+    } catch (error) {
+        console.error("Error writing to characteristic:", error);
+    }
 }
 
 // Attach event listener to the button
@@ -53,5 +89,3 @@ document.addEventListener("DOMContentLoaded", () => {
         connectButton.addEventListener("click", connectToESP32);
     } else {
         console.error("Button not found!");
-    }
-});

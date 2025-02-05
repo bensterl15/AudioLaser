@@ -2,7 +2,18 @@
 
 <button id="connectBtn">Connect to ESP32</button>
 
-<!-- Table for displaying BLE characteristics -->
-<div id="characteristicsTable"></div>
+<!-- BLE Characteristics Table -->
+<table border="1" id="characteristicsTable">
+    <thead>
+        <tr>
+            <th>Service UUID</th>
+            <th>Characteristic UUID</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Table rows will be inserted dynamically -->
+    </tbody>
+</table>
 
 <script src="app.js" defer></script>
