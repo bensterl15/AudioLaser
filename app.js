@@ -30,6 +30,9 @@ document.getElementById("connectBtn").addEventListener("click", async function()
         await bleCharacteristic.startNotifications();
         console.log("Listening for notifications...");
 
+        // Add characteristic to the table
+        addCharacteristicToTable("abcdef01-1234-5678-1234-56789abcdef0", decoder.decode(value));
+
     } catch (error) {
         console.error("Error connecting to Bluetooth device:", error);
     }
@@ -40,6 +43,9 @@ function handleCharacteristicValueChanged(event) {
     let value = event.target.value;
     let decoder = new TextDecoder("utf-8");
     console.log("Notification received:", decoder.decode(value));
+
+    // Update the value in the table when new data is received
+    updateCharacteristicValue("abcdef01-1234-5678-1234-56789abcdef0", decoder.decode(value));
 }
 
 // Function to write data to ESP32
@@ -58,3 +64,26 @@ document.getElementById("sendBtn").addEventListener("click", function() {
     let data = document.getElementById("writeData").value;
     writeToCharacteristic(data);
 });
+
+// Add a row to the table with the characteristic UUID and initial value
+function addCharacteristicToTable(uuid, value) {
+    const tableBody = document.querySelector("#characteristicsTable tbody");
+    const row = document.createElement("tr");
+    row.innerHTML = `
+        <td>${uuid}</td>
+        <td class="value">${value}</td>
+        <td><button onclick="writeToCharacteristic('New Value')">Write</button></td>
+    `;
+    tableBody.appendChild(row);
+}
+
+// Update the value in the table when new data is received
+function updateCharacteristicValue(uuid, value) {
+    const rows = document.querySelectorAll("#characteristicsTable tbody tr");
+    rows.forEach(row => {
+        const uuidCell = row.cells[0];
+        if (uuidCell.textContent === uuid) {
+            row.querySelector(".value").textContent = value;
+        }
+    });
+}
