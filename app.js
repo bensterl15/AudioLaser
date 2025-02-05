@@ -1,91 +1,60 @@
-async function connectToESP32() {
+// Global variable to store the characteristic for writing later
+let bleCharacteristic = null;
+
+document.getElementById("connectBtn").addEventListener("click", async function() {
     try {
         console.log("Requesting Bluetooth Device...");
-
         const device = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: ["battery_service"] // Replace with your ESP32 service UUID
+            acceptAllDevices: true,  // Allow any BLE device
+            optionalServices: ["12345678-1234-5678-1234-56789abcdef0"] // Your SERVICE_UUID
         });
 
-        console.log("Selected device:", device.name || "Unnamed Device");
-
+        console.log("Connecting to GATT Server...");
         const server = await device.gatt.connect();
-        console.log("Connected to GATT Server");
 
-        const services = await server.getPrimaryServices();
-        console.log("Discovered Services:", services);
+        console.log("Getting Service...");
+        const service = await server.getPrimaryService("12345678-1234-5678-1234-56789abcdef0");
 
-        // Retrieve all characteristics
-        let characteristicsList = [];
-        for (const service of services) {
-            const characteristics = await service.getCharacteristics();
-            for (const char of characteristics) {
-                characteristicsList.push({
-                    service: service.uuid,
-                    characteristic: char.uuid,
-                    characteristicObj: char // Store the characteristic object
-                });
-            }
-        }
+        console.log("Getting Characteristic...");
+        bleCharacteristic = await service.getCharacteristic("abcdef01-1234-5678-1234-56789abcdef0");
 
-        console.log("Characteristics:", characteristicsList);
-        displayCharacteristics(characteristicsList);
+        console.log("Connected! Ready to communicate.");
+
+        // Read the initial value
+        let value = await bleCharacteristic.readValue();
+        let decoder = new TextDecoder("utf-8");
+        console.log("Received:", decoder.decode(value));
+
+        // Set up notifications (if supported)
+        bleCharacteristic.addEventListener("characteristicvaluechanged", handleCharacteristicValueChanged);
+        await bleCharacteristic.startNotifications();
+        console.log("Listening for notifications...");
 
     } catch (error) {
         console.error("Error connecting to Bluetooth device:", error);
     }
+});
+
+// Function to handle incoming data
+function handleCharacteristicValueChanged(event) {
+    let value = event.target.value;
+    let decoder = new TextDecoder("utf-8");
+    console.log("Notification received:", decoder.decode(value));
 }
 
-// Function to display characteristics in the table
-function displayCharacteristics(characteristicsList) {
-    let tableBody = document.querySelector("#characteristicsTable tbody");
-    tableBody.innerHTML = ""; // Clear existing rows
-
-    characteristicsList.forEach((item, index) => {
-        let row = document.createElement("tr");
-
-        let serviceCell = document.createElement("td");
-        serviceCell.textContent = item.service;
-        row.appendChild(serviceCell);
-
-        let characteristicCell = document.createElement("td");
-        characteristicCell.textContent = item.characteristic;
-        row.appendChild(characteristicCell);
-
-        let actionCell = document.createElement("td");
-        let inputField = document.createElement("input");
-        inputField.type = "text";
-        inputField.placeholder = "Enter value";
-
-        let writeButton = document.createElement("button");
-        writeButton.textContent = "Write";
-        writeButton.onclick = () => writeCharacteristic(item.characteristicObj, inputField.value);
-
-        actionCell.appendChild(inputField);
-        actionCell.appendChild(writeButton);
-        row.appendChild(actionCell);
-
-        tableBody.appendChild(row);
-    });
-}
-
-// Function to write to a characteristic
-async function writeCharacteristic(characteristic, value) {
-    try {
+// Function to write data to ESP32
+async function writeToCharacteristic(data) {
+    if (bleCharacteristic) {
         let encoder = new TextEncoder();
-        let data = encoder.encode(value);
-
-        await characteristic.writeValue(data);
-        console.log(`Wrote value "${value}" to characteristic ${characteristic.uuid}`);
-    } catch (error) {
-        console.error("Error writing to characteristic:", error);
+        await bleCharacteristic.writeValue(encoder.encode(data));
+        console.log("Sent:", data);
+    } else {
+        console.error("Not connected to a device.");
     }
 }
 
-// Attach event listener to the button
-document.addEventListener("DOMContentLoaded", () => {
-    const connectButton = document.getElementById("connectBtn");
-    if (connectButton) {
-        connectButton.addEventListener("click", connectToESP32);
-    } else {
-        console.error("Button not found!");
+// Event listener for sending data
+document.getElementById("sendBtn").addEventListener("click", function() {
+    let data = document.getElementById("writeData").value;
+    writeToCharacteristic(data);
+});
