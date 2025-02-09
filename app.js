@@ -5,35 +5,50 @@ let audioChunks = [];
 document.addEventListener("DOMContentLoaded", function() {
     
     // RECORDING CODE:
-    // Recording Button Click Event
-    document.getElementById("recordBtn").addEventListener("click", async function() {
-        try {
-            // Request microphone access
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
+    let mediaRecorder;
+        let audioChunks = [];
+        const recordBtn = document.getElementById("recordBtn");
+        const indicator = document.getElementById("recordingIndicator");
 
-            mediaRecorder.ondataavailable = (event) => {
-                audioChunks.push(event.data);
-            };
+        recordBtn.addEventListener("click", async function() {
+            try {
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
 
-            mediaRecorder.onstop = () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                const audioUrl = URL.createObjectURL(audioBlob);
-                document.getElementById("audioPlayback").src = audioUrl;
-                audioChunks = [];  // Clear buffer for next recording
-            };
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
 
-            // Start recording for 5 seconds
-            mediaRecorder.start();
-            console.log("Recording started...");
-            setTimeout(() => {
-                mediaRecorder.stop();
-                console.log("Recording stopped.");
-            }, 5000);
-        } catch (error) {
-            console.error("Error accessing microphone:", error);
-        }
-    });
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    document.getElementById("audioPlayback").src = audioUrl;
+                    audioChunks = [];  // Clear buffer for next recording
+
+                    // Reset button and hide indicator
+                    recordBtn.disabled = false;
+                    recordBtn.textContent = "Record (5s)";
+                    indicator.style.display = "none";
+                };
+
+                // Start recording for 5 seconds
+                mediaRecorder.start();
+                console.log("Recording started...");
+
+                // Change button text and show indicator
+                recordBtn.disabled = true;
+                recordBtn.textContent = "Recording...";
+                indicator.style.display = "inline";
+
+                setTimeout(() => {
+                    mediaRecorder.stop();
+                    console.log("Recording stopped.");
+                }, 5000);
+            } catch (error) {
+                console.error("Error accessing microphone:", error);
+            }
+        });
     
     
     // BLUETOOTH:

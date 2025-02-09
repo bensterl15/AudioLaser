@@ -18,12 +18,15 @@
     <button id="connectBtn">Connect to ESP32</button>
 
     <br><br>
+    
+    <button id="recordBtn">Record (5s)</button>
+    <span id="recordingIndicator" style="display: none; color: red;">⏺ Recording...</span>
+    <audio id="audioPlayback" controls></audio>
+    
+    <br><br>
     <label for="writeData">Send Data:</label>
     <input type="text" id="writeData" placeholder="Type a message">
     <button id="sendBtn">Send</button>
-
-    <button id="recordBtn">Record (5s)</button>
-    <audio id="audioPlayback" controls></audio>
     
     <!-- Move the script to the bottom of the body -->
     <script src="app.js"></script>
