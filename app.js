@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // RECORDING CODE:
     const recordBtn = document.getElementById("recordBtn");
-    const sendAudioBtn = document.getElementById("sendAudioBtn");
+    const sendAudioBtn = document.getElementById("sendBtn");
     const indicator = document.getElementById("recordingIndicator");
 
     recordBtn.addEventListener("click", async function() {
