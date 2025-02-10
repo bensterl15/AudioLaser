@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
     
     // RECORDING CODE:
     const recordBtn = document.getElementById("recordBtn");
-    const sendAudioBtn = document.getElementById("sendAudioBtn");
+    const sendAudioBtn = document.getElementById("sendAudioBtn"); // New send button
     const indicator = document.getElementById("recordingIndicator");
 
     recordBtn.addEventListener("click", async function() {
@@ -53,8 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    
-    // BLUETOOTH:
+    // BLUETOOTH CODE:
     document.getElementById("connectBtn").addEventListener("click", async function() {
         try {
             console.log("Requesting Bluetooth Device...");
