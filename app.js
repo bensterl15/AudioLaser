@@ -2,6 +2,7 @@ let bleCharacteristic = null;
 let mediaRecorder;
 let audioChunks = [];
 let recordedAudioBlob = null; // Store recorded audio
+let mtuSize = 128; // Request 128 bytes (ESP32 usually supports this)
 
 document.addEventListener("DOMContentLoaded", function() {
     
@@ -72,7 +73,17 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("Getting Characteristic...");
             bleCharacteristic = await service.getCharacteristic("abcdef01-1234-5678-1234-56789abcdef0");
 
-            console.log("Connected! Ready to communicate.");
+            console.log("Connected! Requesting higher MTU...");
+
+            // Try to request a higher MTU (Web Bluetooth doesn't have an explicit requestMtu() function)
+            try {
+                let encoder = new TextEncoder();
+                await bleCharacteristic.writeValue(encoder.encode("MTU_TEST".padEnd(mtuSize, " ")));
+                console.log(`MTU size successfully set to ${mtuSize} bytes.`);
+            } catch (error) {
+                console.warn("MTU size negotiation failed. Defaulting to smaller chunks.");
+                mtuSize = 20; // If MTU request fails, fall back to default 20-byte chunks
+            }
 
             // Enable send button if audio is already recorded
             if (recordedAudioBlob) {
@@ -97,19 +108,18 @@ document.addEventListener("DOMContentLoaded", function() {
 
         // Convert Blob to ArrayBuffer
         const arrayBuffer = await recordedAudioBlob.arrayBuffer();
-        const chunkSize = 20; // BLE max payload size
         let offset = 0;
 
-        console.log("Sending audio data over BLE...");
+        console.log(`Sending audio data over BLE with chunk size ${mtuSize} bytes...`);
 
         // Send data in chunks
         while (offset < arrayBuffer.byteLength) {
-            const chunk = arrayBuffer.slice(offset, offset + chunkSize);
+            const chunk = arrayBuffer.slice(offset, offset + mtuSize);
             await bleCharacteristic.writeValue(new Uint8Array(chunk));
-            offset += chunkSize;
+            offset += mtuSize;
 
             // Optional: Delay to avoid buffer overflow
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 50));
         }
 
         console.log("Audio transmission complete.");
