@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     
     // BLUETOOTH:
-    document.getElementById("sendBtn").addEventListener("click", async function() {
+    document.getElementById("connectBtn").addEventListener("click", async function() {
         try {
             console.log("Requesting Bluetooth Device...");
             const device = await navigator.bluetooth.requestDevice({
@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     // **Function to send recorded audio over Bluetooth when user clicks "Send Audio"**
-    document.getElementById("sendAudioBtn").addEventListener("click", async function() {
+    document.getElementById("sendBtn").addEventListener("click", async function() {
         if (!recordedAudioBlob) {
             console.error("No recorded audio to send.");
             return;
