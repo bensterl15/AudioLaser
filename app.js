@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     
     // BLUETOOTH:
-    document.getElementById("connectBtn").addEventListener("click", async function() {
+    document.getElementById("sendBtn").addEventListener("click", async function() {
         try {
             console.log("Requesting Bluetooth Device...");
             const device = await navigator.bluetooth.requestDevice({
