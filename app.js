@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", function() {
     recordBtn.addEventListener("click", async function() {
         try {
             // Request microphone access
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: { sampleRate: 16000, sampleSize: 16, channelCount: 1 } }); // Example: 44.1kHz, 16-bit, mono
             mediaRecorder = new MediaRecorder(stream);
 
             mediaRecorder.ondataavailable = (event) => {
