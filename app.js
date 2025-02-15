@@ -132,6 +132,7 @@ document.addEventListener("DOMContentLoaded", function() {
             const int16PCM = new Int16Array(pcmData.length);
             for (let i = 0; i < pcmData.length; i++) {
                 int16PCM[i] = pcmData[i] * 32767; // Scale to 16-bit range
+                console.log(int16PCM[i]);
             }
 
             const pcmBytes = new Uint8Array(int16PCM.buffer);
