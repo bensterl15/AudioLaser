@@ -5,7 +5,7 @@ let recordedAudioBlob = null; // Store recorded audio
 let mtuSize = 128; // Request 128 bytes (ESP32 usually supports this)
 
 document.addEventListener("DOMContentLoaded", function() {
-    
+
     // RECORDING CODE:
     const recordBtn = document.getElementById("recordBtn");
     const sendAudioBtn = document.getElementById("sendBtn");
@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    
+
     // BLUETOOTH:
     document.getElementById("connectBtn").addEventListener("click", async function() {
         try {
@@ -106,22 +106,50 @@ document.addEventListener("DOMContentLoaded", function() {
             return;
         }
 
-        // Convert Blob to ArrayBuffer
+        // 1. Save the WAV file (for local playback)
+        const audioUrl = URL.createObjectURL(recordedAudioBlob);
+        document.getElementById("audioPlayback").src = audioUrl; // For immediate playback
+
+        // Optional: Download the WAV file
+        const a = document.createElement('a');
+        a.href = audioUrl;
+        a.download = 'recorded_audio.wav';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(audioUrl);
+
+        // 2. Convert and send PCM data (for ESP32)
+        const audioCtx = new AudioContext({ sampleRate: 16000 }); // ESP32 sample rate
+        const source = audioCtx.createBufferSource();
+
         const arrayBuffer = await recordedAudioBlob.arrayBuffer();
-        let offset = 0;
 
-        console.log(`Sending audio data over BLE with chunk size ${mtuSize} bytes...`);
+        audioCtx.decodeAudioData(arrayBuffer, async (buffer) => {
+            const pcmData = buffer.getChannelData(0); // Assuming mono audio
 
-        // Send data in chunks
-        while (offset < arrayBuffer.byteLength) {
-            const chunk = arrayBuffer.slice(offset, offset + mtuSize);
-            await bleCharacteristic.writeValue(new Uint8Array(chunk));
-            offset += mtuSize;
+            const int16PCM = new Int16Array(pcmData.length);
+            for (let i = 0; i < pcmData.length; i++) {
+                int16PCM[i] = pcmData[i] * 32767; // Scale to 16-bit range
+            }
 
-            // Optional: Delay to avoid buffer overflow
-            await new Promise(resolve => setTimeout(resolve, 50));
-        }
+            const pcmBytes = new Uint8Array(int16PCM.buffer);
 
-        console.log("Audio transmission complete.");
+            let offset = 0;
+            console.log(`Sending PCM data over BLE with chunk size ${mtuSize} bytes...`);
+
+            while (offset < pcmBytes.byteLength) {
+                const chunk = pcmBytes.slice(offset, offset + mtuSize);
+                await bleCharacteristic.writeValue(chunk);
+                offset += mtuSize;
+                await new Promise(resolve => setTimeout(resolve, 20)); // Adjust delay if needed
+            }
+
+            console.log("PCM transmission complete.");
+
+        }, (err) => {
+            console.error("Error decoding audio data:", err);
+        });
     });
 });
